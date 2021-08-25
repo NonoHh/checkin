@@ -4,12 +4,16 @@ import hmac
 import json
 import time
 import urllib.parse
+import os.path
 import requests
 import yaml
 
+from pathlib import Path
+
 
 def push_message(msg, is_at_all=False):
-    with open('./config.yaml') as file:
+    cur_dir = Path(__file__).parent.parent.absolute()
+    with open(os.path.join(cur_dir, 'config.yaml')) as file:
         config = yaml.safe_load(file)
         secret = config['DING_SECRET']
         token = config['DING_TOKEN']

@@ -1,11 +1,12 @@
 import datetime
 import json
+import os.path
 import re
 import time
 import yaml
-
 import requests
 
+from pathlib import Path
 from utils.message import push_message
 
 
@@ -112,7 +113,8 @@ def main(username, password):
 
 
 if __name__ == "__main__":
-    with open('./config.yaml') as file:
+    cur_dir = Path(__file__).parent.absolute()
+    with open(os.path.join(cur_dir, 'config.yaml')) as file:
         config = yaml.safe_load(file)
         accounts = config['ZJU_accout']
 

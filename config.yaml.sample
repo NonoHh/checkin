@@ -3,3 +3,6 @@ DING_TOKEN: 'ec2ad*'
 ZJU_accout:
   - username: '2200****'
     password: '****'
+LENOVO_accout:
+  - username: '2200****'
+    password: '****'

@@ -1,4 +1,3 @@
-import imp
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
@@ -6,8 +5,6 @@ import json
 import re
 import time
 import datetime
-import os
-import sys
 
 from depend import Depend, load_send
 from notify import send
@@ -127,8 +124,6 @@ class HitCarder(object):
 
         new_info = def_info.copy()
         new_info.update(magic_code_group)
-        ocr = ddddocr.DdddOcr()
-        resp = self.sess.get(self.captcha_url)
         # form change
         new_info['szgjcs'] = ""
         new_info['zgfx14rfhsj'] = ""
@@ -219,8 +214,8 @@ def main(username, password):
 
 
 if __name__ == "__main__":
-    username = Depend.get_env['ZJU_ACCOUNT']
-    password = Depend.get_env['ZJU_PWD']
+    username = Depend.get_env('ZJU_ACCOUNT')
+    password = Depend.get_env('ZJU_PWD')
 
     ret, msg = main(username, password)
     send(ret, msg)

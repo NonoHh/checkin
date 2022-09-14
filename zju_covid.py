@@ -1,14 +1,16 @@
 import datetime
 import json
-import os.path
 import re
 import time
-import yaml
 import requests
 
-from pathlib import Path
-from utils.message import push_message
+from depend import Depend
+from notify import send
 
+proxy_servers = {
+   'http': Depend.get_env('http_proxy'),
+   'https': Depend.get_env('https_proxy'),
+}
 
 def get_date():
     today = datetime.date.today()
@@ -33,9 +35,9 @@ class HitCarder(object):
         self.sess = requests.Session()
 
     def login(self):
-        res = self.sess.get(self.login_url)
+        res = self.sess.get(self.login_url, proxies=proxy_servers)
         execution = re.search('name="execution" value="(.*?)"', res.text).group(1)
-        res = self.sess.get(url='https://zjuam.zju.edu.cn/cas/v2/getPubKey').json()
+        res = self.sess.get(url='https://zjuam.zju.edu.cn/cas/v2/getPubKey', proxies=proxy_servers).json()
         encrypt_password = rsa_encrypt(self.password, res['exponent'], res['modulus'])
 
         data = {
@@ -44,19 +46,19 @@ class HitCarder(object):
             'execution': execution,
             '_eventId': 'submit'
         }
-        res = self.sess.post(url=self.login_url, data=data)
+        res = self.sess.post(url=self.login_url, data=data, proxies=proxy_servers)
 
         if '统一身份认证' in res.content.decode():
             raise RuntimeError('登录失败，请核实账号密码重新登录')
         return self.sess
 
     def post(self):
-        res = self.sess.post(self.save_url, data=self.info)
+        res = self.sess.post(self.save_url, data=self.info, proxies=proxy_servers)
         return json.loads(res.text)
 
     def get_info(self, html=None):
         if not html:
-            res = self.sess.get(self.base_url)
+            res = self.sess.get(self.base_url, proxies=proxy_servers)
             html = res.content.decode()
 
         old_infos = re.findall(r'oldInfo: ({[^\n]+})', html)
@@ -91,32 +93,26 @@ def main(username, password):
     try:
         hit_carder.login()
     except Exception as err:
-        push_message('统一认证失败: ' + str(err), True)
+        send('ZJU', '统一认证失败: ' + str(err))
         return
 
     try:
         hit_carder.get_info()
     except Exception as err:
-        push_message('获取信息失败: ' + str(err), True)
+        send('ZJU', '获取信息失败: ' + str(err))
         return
 
     pname = hit_carder.info['name'] + ' '
     try:
         res = hit_carder.post()
         if str(res['e']) == '0':
-            push_message('{} 已为您打卡成功'.format(hit_carder.info['name']))
+            send('ZJU', '{} 已为您打卡成功'.format(pname))
         else:
-            push_message(hit_carder.info['name'] + ' ' + res['m'])
+            send('ZJU', pname + res['m'])
     except Exception as err:
-        push_message('信息提交失败: ' + str(err), True)
+        send('ZJU', '信息提交失败: ' + str(err))
         return
 
 
 if __name__ == "__main__":
-    cur_dir = Path(__file__).parent.absolute()
-    with open(os.path.join(cur_dir, 'config.yaml')) as file:
-        config = yaml.safe_load(file)
-        accounts = config['ZJU_accout']
-
-    for account in accounts:
-        main(account['username'], account['password'])
+    main(Depend.get_env('ZJU_ACCOUNT'), Depend.get_env('ZJU_PWD'))

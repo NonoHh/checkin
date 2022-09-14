@@ -1,15 +1,14 @@
 from bs4 import BeautifulSoup
 import requests
-import os.path
-import yaml
 
-from pathlib import Path
-from utils.message import push_message
+from depend import Depend, load_send
+from notify import send
 
 class LenovoCheckIn:
     def __init__(self, username, password):
         self.username = username
         self.password = password
+        load_send()
 
     def login(self):
         url = "https://reg.lenovo.com.cn/auth/v3/dologin"
@@ -35,11 +34,11 @@ class LenovoCheckIn:
         check = str(signin.text)
         if "true" in check:
             if "乐豆" in check:
-                push_message("LENOVO签到成功")
+                send("LENOVO", "签到成功")
             else:
-                push_message("请不要重复LENOVO签到")
+                send("LENOVO", "重复签到")
         else:
-            push_message("LENOVO签到失败，请重试")
+            send("LENOVO", "签到失败")
 
     def getContinuousDays(self, session):
         url = "https://club.lenovo.com.cn/signlist/"
@@ -61,14 +60,8 @@ class LenovoCheckIn:
             self.signin(s)
             day = self.getContinuousDays(s)
             msg += day
-        push_message(msg)
+        send("LENOVO", msg)
 
 
 if __name__ == "__main__":
-    cur_dir = Path(__file__).parent.absolute()
-    with open(os.path.join(cur_dir, 'config.yaml')) as file:
-        config = yaml.safe_load(file)
-        accounts = config['LENOVO_accout']
-
-    for account in accounts:
-        LenovoCheckIn(account['username'], account['password']).main()
+    LenovoCheckIn(Depend.get_env('LENOVO_ACCOUNT'), Depend.get_env('LENOVO_PWD')).main()

@@ -29,9 +29,9 @@ def start():
     email = state.json()['data']['email']
     if 'message' in checkin.text:
         mess = checkin.json()['message']
-        send(mess+' '+email+' 剩余'+time+'天')
+        send("GLADOS", mess+' '+email+' 剩余'+time+'天')
     else:
-        send(email+'更新cookie')
+        send("GLADOS", email+'更新cookie')
 
 
 if __name__ == '__main__':
